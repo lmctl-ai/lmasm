@@ -27,7 +27,8 @@ fi
 ./fixtures/build-fixtures.sh
 
 export PATH="$PWD/bin:$PATH"
-lmscript examples/dep-analysis.lms > /tmp/lmasm-dep-analysis.out
+LMSCRIPT="${LMSCRIPT:-lmscript}"
+"$LMSCRIPT" examples/dep-analysis.lms > /tmp/lmasm-dep-analysis.out
 
 cat > /tmp/lmasm-dep-analysis.expect <<'EOF'
 fixtures/jars/liba.jar, 3, 2

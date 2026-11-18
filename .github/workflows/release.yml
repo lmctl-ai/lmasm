@@ -28,8 +28,15 @@ jobs:
         shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@0.2.482"
-          export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
+          if [ "$RUNNER_OS" = Windows ]; then
+            LMSCRIPT="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin/lmscript.cmd"
+          else
+            export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
+            LMSCRIPT=lmscript
+          fi
+          echo "LMSCRIPT=$LMSCRIPT" >> "$GITHUB_ENV"
           echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
+          "$LMSCRIPT" --version
       - name: Build tools
         if: runner.os == 'Linux'
         run: timeout 180 sudo apt-get update -qq && timeout 180 sudo apt-get install -y zlib1g-dev

@@ -38,9 +38,15 @@ jobs:
         shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@$LMCODE_COMPILER_VERSION"
-          export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
+          if [ "$RUNNER_OS" = Windows ]; then
+            LMSCRIPT="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin/lmscript.cmd"
+          else
+            export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
+            LMSCRIPT=lmscript
+          fi
+          echo "LMSCRIPT=$LMSCRIPT" >> "$GITHUB_ENV"
           echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
-          lmscript --version
+          "$LMSCRIPT" --version
       - name: Build and integration test
         shell: bash
         run: mvn -q verify
