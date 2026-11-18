@@ -23,10 +23,16 @@ fi
 rm -rf build jars appmain apptest.jar
 mkdir -p build/liba build/libb build/appmain build/apptest jars appmain/classes
 
+# javac needs the platform classpath separator (";" on Windows).
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) CP_SEP=";" ;;
+  *) CP_SEP=":" ;;
+esac
+
 "$JAVAC" --release 21 -d build/liba src/com/acme/liba/*.java
 "$JAVAC" --release 21 -d build/libb src/com/acme/libb/*.java
-"$JAVAC" --release 21 -cp build/liba:build/libb -d build/appmain src/com/acme/app/Main1.java src/com/acme/app/Main2.java
-"$JAVAC" --release 21 -cp build/liba:build/libb -d build/apptest src/com/acme/app/Test1.java src/com/acme/app/Test2.java
+"$JAVAC" --release 21 -cp "build/liba${CP_SEP}build/libb" -d build/appmain src/com/acme/app/Main1.java src/com/acme/app/Main2.java
+"$JAVAC" --release 21 -cp "build/liba${CP_SEP}build/libb" -d build/apptest src/com/acme/app/Test1.java src/com/acme/app/Test2.java
 
 "$JAR" cf jars/liba.jar -C build/liba .
 "$JAR" cf jars/libb.jar -C build/libb .
