@@ -38,6 +38,7 @@ jobs:
         shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@$LMCODE_COMPILER_VERSION"
+          export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
           echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
           lmscript --version
       - name: Build and integration test

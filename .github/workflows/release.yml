@@ -28,6 +28,7 @@ jobs:
         shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@0.2.482"
+          export PATH="$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin:$PATH"
           echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Build tools
         if: runner.os == 'Linux'
