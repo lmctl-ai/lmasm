@@ -1,0 +1,10 @@
+/target/
+/fixtures/build/
+/fixtures/jars/
+/fixtures/appmain/
+/fixtures/apptest.jar
+*.class
+.idea/
+# lmctl team workspace files, not part of the public repo
+/lmasm.lmc
+/lmasm.lmc.*.lock

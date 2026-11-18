@@ -1,0 +1,46 @@
+# Dependency analysis, written in lmcode.
+#
+# Inputs (edit these lists to change what is analyzed):
+#   lib_paths  - third-party library jars
+#   main_paths - custom code in main scope (jars or classes directories)
+#   test_paths - custom code in test scope (jars or classes directories)
+#
+# Output, one line per third-party jar:
+#   <jar>, <classes used by any custom code (main + test)>, <classes used by test-scope custom code>
+program = _lmcode_ cli="lmasm";
+let lib_paths = str_split("fixtures/jars/liba.jar,fixtures/jars/libb.jar", ",");
+let main_paths = str_split("fixtures/appmain/classes", ",");
+let test_paths = str_split("fixtures/apptest.jar", ",");
+
+fn scan(path: string, lib_set: StrMap, used: StrMap) -> void {
+  let classes = asm_classes(path);
+  for (class_name in classes) {
+    let refs = asm_refs(path, class_name);
+    for (ref in refs) {
+      if (lib_set.has(ref)) {
+        used.set(ref, "1");
+      }
+    }
+  }
+}
+
+for (lib in lib_paths) {
+  let lib_set = str_map();
+  let lib_classes = asm_classes(lib);
+  for (class_name in lib_classes) {
+    lib_set.set(class_name, "1");
+  }
+  let used = str_map();
+  let used_test = str_map();
+  for (path in main_paths) {
+    scan(path, lib_set, used);
+  }
+  for (path in test_paths) {
+    scan(path, lib_set, used);
+    scan(path, lib_set, used_test);
+  }
+  print(lib + ", " + str(used.len()) + ", " + str(used_test.len()));
+}
+end _lmcode_
+result = run_lmcode(program);
+print(json_stringify(result));

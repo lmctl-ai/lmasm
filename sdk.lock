@@ -1,0 +1,4 @@
+sdk=lmcode-java
+revision=a61bd716a1cc
+source=/home/mma/repos/lmctl-ai/lmcode-java
+sync="cp -r $source/src/main/java/io vendor/lmcode-java/src/main/java/"

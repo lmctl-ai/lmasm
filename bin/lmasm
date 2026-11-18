@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# lmasm host launcher: resolves a JDK, then runs the shaded host jar.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+JAR="$DIR/target/lmasm.jar"
+
+if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+  JAVA="$JAVA_HOME/bin/java"
+elif command -v java >/dev/null 2>&1; then
+  JAVA="java"
+elif [ -x /home/mma/repos/lmcode-team/wp211-migration-batch1-evidence/temurin25/bin/java ]; then
+  JAVA=/home/mma/repos/lmcode-team/wp211-migration-batch1-evidence/temurin25/bin/java
+else
+  echo "lmasm: no java found (set JAVA_HOME)" >&2
+  exit 2
+fi
+
+if [ ! -f "$JAR" ]; then
+  echo "lmasm: $JAR missing; run 'mvn package' first" >&2
+  exit 2
+fi
+
+exec "$JAVA" -jar "$JAR" "$@"

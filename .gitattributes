@@ -1,0 +1,5 @@
+# Schema bytes are hashed into compiled lmcode bytecode; line endings must be stable.
+*.json text eol=lf
+*.lms text eol=lf
+*.schema.json text eol=lf
+* text=auto

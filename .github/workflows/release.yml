@@ -1,0 +1,87 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions: {contents: write}
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: linux-x64, runner: ubuntu-22.04, suffix: ''}
+          - {name: linux-arm64, runner: ubuntu-22.04-arm, suffix: ''}
+          - {name: macos-x64, runner: macos-15-intel, suffix: ''}
+          - {name: macos-arm64, runner: macos-14, suffix: ''}
+          - {name: windows-x64, runner: windows-latest, suffix: .exe}
+    runs-on: ${{ matrix.runner }}
+    name: native-${{ matrix.name }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173
+        with: {java-version: '21', distribution: graalvm-community, cache: maven}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '24'}
+      - name: Install lmctl and lmscript
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@0.2.482"
+          echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Build tools
+        if: runner.os == 'Linux'
+        run: timeout 180 sudo apt-get update -qq && timeout 180 sudo apt-get install -y zlib1g-dev
+      - name: MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Package
+        shell: bash
+        run: mvn -q -DskipTests package
+      - name: Native image
+        shell: bash
+        run: ./scripts/build-native.sh
+      - name: Native CLI smoke
+        shell: bash
+        run: |
+          binary=target/lmasm-native${{ matrix.suffix }}
+          test -x "$binary"
+          "$binary" --version
+          "$binary" --lmcode-schema --json | cmp - schema/lmasm.schema.json
+          "$binary" --lmcode-signatures | grep -q '^fn asm_classes(string) -> StrList$'
+      - name: lmcode end-to-end on the native host
+        shell: bash
+        run: |
+          mkdir -p native-bin
+          cp "target/lmasm-native${{ matrix.suffix }}" "native-bin/lmasm${{ matrix.suffix }}"
+          echo "$PWD/native-bin" >> "$GITHUB_PATH"
+          LMASM_SKIP_BUILD=1 ./test.sh
+      - name: Package artifact
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "target/lmasm-native${{ matrix.suffix }}" "dist/lmasm-${{ matrix.name }}${{ matrix.suffix }}"
+          (sha256sum "dist/lmasm-${{ matrix.name }}${{ matrix.suffix }}" || shasum -a 256 "dist/lmasm-${{ matrix.name }}${{ matrix.suffix }}") > "dist/SHA256-${{ matrix.name }}.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lmasm-${{ matrix.name }}
+          path: dist/*
+  release:
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {pattern: lmasm-*, path: release, merge-multiple: true}
+      - name: Assemble release assets
+        run: |
+          set -euo pipefail
+          cd release
+          rm -f SHA256SUMS SHA256-*.txt
+          sha256sum lmasm-* > SHA256SUMS
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" release/*

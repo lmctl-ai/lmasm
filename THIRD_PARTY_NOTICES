@@ -1,0 +1,66 @@
+# Third-party and toolchain notices
+
+lmasm application code is distributed under the MIT License in LICENSE.
+
+## ASM (org.ow2.asm:asm, org.ow2.asm:asm-tree)
+
+The bytecode reading layer uses ASM, which is bundled into the shaded
+`lmasm.jar` and into native executables. ASM is distributed under the
+3-clause BSD license:
+
+```
+ ASM: a very small and fast Java bytecode manipulation framework
+ Copyright (c) 2000-2011 INRIA, France Telecom
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the copyright holders nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+## lmcode-java SDK
+
+`vendor/lmcode-java` carries a source copy of the lmcode-java SDK (MIT
+License, Copyright (c) 2026 lmctl-ai); the pin is recorded in `sdk.lock`.
+
+## GraalVM Native Image
+
+Native release builds use GraalVM Community Edition and its Native Image
+tooling. GraalVM Community Edition is distributed under its own GPLv2 with
+Classpath Exception terms and accompanying notices. The toolchain is a
+build-time requirement; it is not linked as an application library by the
+JVM build.
+
+## GNU C Library
+
+Linux native binaries use the system glibc dynamically and require glibc
+2.35 or newer. glibc is licensed under LGPL-2.1-or-later and includes the
+GNU Lesser General Public License text and notices supplied by the operating
+system. The native executable does not statically link glibc. This project
+does not support musl or another alternate libc for its release binaries.
+
+## Other build tools
+
+Maven and the Maven plugins used by the build are build-time tools. Their
+licenses and notices are supplied by their respective distributions and are
+not bundled into the runtime.

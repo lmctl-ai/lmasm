@@ -1,0 +1,87 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compiler_version:
+        description: "Published @lmctl-ai/lmctl version"
+        required: false
+        default: "0.2.482"
+permissions: {contents: read}
+env:
+  LMCODE_COMPILER_VERSION: ${{ inputs.compiler_version || vars.LMCODE_COMPILER_VERSION || '0.2.482' }}
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+jobs:
+  jvm:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: linux-x64, runner: ubuntu-22.04}
+          - {name: macos-x64, runner: macos-15-intel}
+          - {name: windows-x64, runner: windows-latest}
+    runs-on: ${{ matrix.runner }}
+    name: jvm-${{ matrix.name }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173
+        with: {java-version: '21', distribution: graalvm-community, cache: maven}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '24'}
+      - name: Install lmctl and lmscript
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@$LMCODE_COMPILER_VERSION"
+          echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
+          lmscript --version
+      - name: Build and integration test
+        shell: bash
+        run: mvn -q verify
+      - name: lmcode end-to-end
+        shell: bash
+        run: LMASM_SKIP_BUILD=1 ./test.sh
+  native-smoke:
+    runs-on: ubuntu-22.04
+    name: native-smoke-linux-x64
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173
+        with: {java-version: '21', distribution: graalvm-community, cache: maven}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '24'}
+      - name: Install lmctl and lmscript
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/lmcode-lmctl" "@lmctl-ai/lmctl@$LMCODE_COMPILER_VERSION"
+          echo "$RUNNER_TEMP/lmcode-lmctl/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Build tools
+        run: timeout 180 sudo apt-get update -qq && timeout 180 sudo apt-get install -y zlib1g-dev
+      - name: Package
+        run: mvn -q -DskipTests package
+      - name: Native image
+        run: ./scripts/build-native.sh
+      - name: Linkage policy
+        run: |
+          readelf -d target/lmasm-native
+          bad="$(readelf -d target/lmasm-native | sed -n 's/.*Shared library: \[\(.*\)\].*/\1/p' | grep -Ev '^(libc\.so\.6|libm\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux.*)$' || true)"
+          test -z "$bad" || { echo "Unexpected shared libraries: $bad"; exit 1; }
+      - name: Native CLI smoke
+        run: |
+          target/lmasm-native --version
+          target/lmasm-native --lmcode-schema --json | cmp - schema/lmasm.schema.json
+          target/lmasm-native --lmcode-signatures | grep -q '^fn asm_classes(string) -> StrList$'
+      - name: lmcode end-to-end on the native host
+        shell: bash
+        run: |
+          mkdir -p native-bin
+          cp target/lmasm-native native-bin/lmasm
+          echo "$PWD/native-bin" >> "$GITHUB_PATH"
+          LMASM_SKIP_BUILD=1 LMASM_SKIP_FIXTURES= ./test.sh
