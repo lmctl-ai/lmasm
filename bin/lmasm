@@ -2,7 +2,7 @@
 # lmasm host launcher: resolves a JDK, then runs the shaded host jar.
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-JAR="$DIR/target/lmasm.jar"
+JAR="${LMASM_JAR:-$DIR/target/lmasm.jar}"
 
 if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
   JAVA="$JAVA_HOME/bin/java"

@@ -52,7 +52,16 @@ jobs:
         run: mvn -q verify
       - name: lmcode end-to-end
         shell: bash
-        run: LMASM_SKIP_BUILD=1 ./test.sh
+        run: |
+          # Host discovery tries the extensionless name before .CMD in each
+          # PATH directory, so shadow bin/lmasm with a .cmd-only directory.
+          if [ "$RUNNER_OS" = Windows ]; then
+            mkdir -p "$RUNNER_TEMP/lmasm-host"
+            cp bin/lmasm.cmd "$RUNNER_TEMP/lmasm-host/lmasm.cmd"
+            export PATH="$RUNNER_TEMP/lmasm-host:$PATH"
+            export LMASM_JAR="$(pwd -W)/target/lmasm.jar"
+          fi
+          LMASM_SKIP_BUILD=1 ./test.sh
   native-smoke:
     runs-on: ubuntu-22.04
     name: native-smoke-linux-x64

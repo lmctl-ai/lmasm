@@ -26,7 +26,9 @@ fi
 
 ./fixtures/build-fixtures.sh
 
-export PATH="$PWD/bin:$PATH"
+# The launcher is a fallback: CI jobs may put a native binary or a Windows
+# shadow launcher earlier on PATH, and that earlier entry must win.
+export PATH="$PATH:$PWD/bin"
 LMSCRIPT="${LMSCRIPT:-lmscript}"
 "$LMSCRIPT" examples/dep-analysis.lms > /tmp/lmasm-dep-analysis.out
 

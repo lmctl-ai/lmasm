@@ -1,0 +1,16 @@
+first  read
+../lmaws/durable-memory/index.md
+../lmcode/durable-memory/index.md
+../lmcode-java/durable-memory/index.md
+/home/mma/repos/lmctlhq/lmctl-mono/lmscript/durable-memory/index.md
+
+
+use asm bytecode library asm-tree api and exposed as host functions for lmcode. 
+the first application is the dependent analysis
+give a set of jar/folders of custom code, and a set of third party libraries jar
+the application need be lmcode, so change is easy
+one of the summary output
+third-party-jar, n of class in the library are used in the custom code, n of class used are in test scope
+
+
+
