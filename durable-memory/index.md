@@ -31,15 +31,35 @@ exposed as host functions for lmcode, and lmcode applications built on it.
 
 ## CI and releases
 
-- `.github/workflows/ci.yml`: push/PR — JVM+e2e on linux-x64, macos-x64,
-  windows-x64; native smoke on linux-x64 (linkage policy, schema byte compare,
-  e2e on the native binary). Compiler pinned via `LMCODE_COMPILER_VERSION`
-  (default 0.2.482, same pin as lmcode-java CI).
+- `.github/workflows/ci.yml`: push/PR — JVM+e2e on linux-x64, macos-x64
+  (macos-15-intel), windows-x64; native smoke on linux-x64 (linkage policy,
+  schema byte compare, e2e on the native binary). Compiler pinned via
+  `LMCODE_COMPILER_VERSION` (default 0.2.482, same pin as lmcode-java CI).
 - `.github/workflows/release.yml`: `v*` tags — GraalVM Native Image on five
   platforms, each smoke-tested and run through the e2e gate before upload;
-  release job publishes assets + SHA256SUMS. Native build:
-  `scripts/build-native.sh` (resources `lmasm[.-].*`, static libstdc++/libgcc,
-  dynamic glibc >= 2.35, march=compatibility).
+  release job publishes assets + SHA256SUMS. v0.1.0 published 2026-11-18.
+- Native build: `scripts/build-native.sh` (resources `lmasm[.-].*`, static
+  libstdc++/libgcc, dynamic glibc >= 2.35, march=compatibility).
+
+### Windows/macOS CI lessons (cost real iterations)
+
+- `GITHUB_PATH`/`GITHUB_ENV` only affect SUBSEQUENT steps — export inline when
+  the same step needs the tool.
+- npm's POSIX shim for lmscript is broken in git-bash on Windows; use
+  `lmscript.cmd` (lmcode-java does the same).
+- lmcode host discovery (`lmscript.ts` `findExecutable`/`boundExecutable`)
+  tries the extensionless name before `.CMD`/`.EXE` in EACH PATH directory, and
+  the discovery probe spawns with `shell:false` — Windows hosts must be real
+  `.exe` binaries (e.g. the GraalVM build); `.cmd` wrappers fail with EINVAL.
+- `javac -cp` needs `;` on Windows.
+- GraalVM CE on Windows ships `bin\native-image.cmd` (not found by git-bash
+  `command -v`, not exec-able by `/usr/bin/timeout`); resolve via `JAVA_HOME`.
+- macOS has no `timeout(1)` without coreutils (`brew install coreutils`);
+  `timeout_cmd` degrades to no timeout.
+- The `macos-14` label was retired ("configuration not supported"); arm64
+  macOS builds use `macos-15`.
+- `test.sh` appends (not prepends) `bin` to PATH so CI-provided host binaries
+  (native e2e) win; it honors `LMSCRIPT` and `LMASM_SKIP_BUILD`.
 
 ## License
 
