@@ -1,5 +1,7 @@
 # lmasm
 
+Documentation: [Quick reference](https://www.lmctl.com/tools/lmasm/) · [LLM skill](https://www.lmctl.com/tools/lmasm/skill.html) · [Guide](https://www.lmctl.com/tools/lmasm/guide.html) · [Reference](https://www.lmctl.com/tools/lmasm/reference.html)
+
 The ASM bytecode library (asm + asm-tree) exposed as host functions for
 [lmcode](https://github.com/lmctl-ai/lmcode), plus the first application built
 on it: **dependent analysis** — given custom code (jars or classes folders) and
